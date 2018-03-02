@@ -1,0 +1,28 @@
+{
+  "name": "Magic-Mirror-Api",
+  "version": "1.0.0",
+  "description": "This module for the Magic Mirror allows you send notifications through a RESTful(ish) API.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juzim/MMM-Api"
+  },
+  "keywords": [
+    "magic mirror",
+    "smart mirror",
+    "module",
+    "remote control",
+    "control",
+    "api"
+  ],
+  "author": "Julian Zimmermann",
+  "contributors": "git+https://github.com/juzim/MMM-Api/graphs/contributors",
+  "license": "MIT",
+  "bugs": {
+    "url": "git+https://github.com/juzim/MMM-Api/issues"
+  },
+  "homepage": "git+https://github.com/juzim/MMM-Api#readme",
+  "dependencies": {
+    "simple-git": "latest",
+    "body-parser": "latest"
+  }
+}
