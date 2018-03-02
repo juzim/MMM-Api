@@ -1,7 +1,7 @@
 /* Magic Mirror
  * Module: Api
  *
- * By Joseph Bethge
+ * By Julian Zimmermann
  * MIT Licensed.
  */
 
@@ -28,8 +28,23 @@ module.exports = NodeHelper.create({
 
 		this.moduleData = {}
 
-		self.getDefaultModules();
-		self.getCustomModules();
+		self.loadModules(
+			path.resolve(__dirname + "/../default"),
+			function(f) {
+				return f !== "node_modules"
+					&& f !== "README.md"
+					&& f !== "defaultmodules.js"
+			}
+		);
+
+		self.loadModules(
+			path.resolve(__dirname + "/.."),
+			function(f) {
+				return f !== "node_modules"
+					&& f !== "default"
+					&& f !== "README.md"
+			}
+		);
 
 		console.log("Starting node helper for: " + self.name);
 
@@ -39,6 +54,7 @@ module.exports = NodeHelper.create({
 
 		this.expressApp.get("/api/:modulename", (req, res) => {
 			var moduleName = self.formatName(req.params.modulename)
+			console.log(moduleName)
 			if (this.moduleData[moduleName] == undefined) {
 				res.status(404).send({'success': "false", "error": "Module not found"})
 				return
@@ -72,32 +88,25 @@ module.exports = NodeHelper.create({
 		});
 	},
 
-
-	getDefaultModules: function() {
+	loadModules: function(modulePath, filter) {
 		var self = this;
 
-		var files = fs.readdirSync(path.resolve(__dirname + "/../default"))
+		var files = fs.readdirSync(modulePath).filter(
+			filter
+		)
 
 		for (index in files) {
 			var file = files[index];
 			var installedModules = []
 			for (var i = 0; i < files.length; i++) {
 				var module = files[i];
-
-				if (
-					module !== "node_modules"
-					&& module !== "README.md"
-					&& module !== "defaultmodules.js")
-				{
-					installedModules.push(module);
-
-				}
+				installedModules.push(module);
 			}
 
 			for (index in installedModules) {
 				var moduleName = installedModules[index]
 				var file = fs.readFileSync(
-					path.resolve(__dirname + "/../default/" + moduleName + '/' + moduleName + '.js'),
+					path.resolve(modulePath + '/' + moduleName + '/' + moduleName + '.js'),
 					'utf8')
 
 					var moduleActions = self.getActions(file)
@@ -111,74 +120,38 @@ module.exports = NodeHelper.create({
 
 	getActions: (content) => {
 		var self = this;
-
-			//var re = /case '([A-Z_]+)'/g;
 			var re = /notification \=\=\=? "([A-Z_]+)"|case '([A-Z_]+)'/g;
 			var m;
 			var availabeActions = [];
 			do {
-					m = re.exec(content);
-					if (m && m[1] != 'DOM_OBJECTS_CREATED') {
-							availabeActions.push(m[1]);
+					if (m = re.exec(content)) {
+						m = m.filter(function(rm) {
+							return rm != undefined
+						})
+
+						if (m.indexOf('DOM_OBJECTS_CREATED') >= 0) {
+							continue;
+						}
+
+						availabeActions.push(m[1]);
 					}
 			} while (m);
 
 			return availabeActions;
-	},
+		},
+		formatName: function(string) {
+			var parts = string.split('-');
 
-	getCustomModules: function() {
-				var self = this;
+			if (parts.length == 1) {
+				return string
+			}
 
-				var files = fs.readdirSync(path.resolve(__dirname + "/.."))
+			if (parts[0].toLowerCase() == 'mmm') {
+				parts[0] = parts[0].toUpperCase();
+			}
 
-				for (index in files) {
-					var file = files[index];
-					var installedModules = []
-					for (var i = 0; i < files.length; i++) {
-						var module = files[i];
-
-						if (
-							files[i] !== "node_modules"
-							&& files[i] !== "default"
-							&& files[i] !== "README.md"
-						) {
-							installedModules.push(module);
-
-						}
-					}
-
-					for (index in installedModules) {
-						var moduleName = installedModules[index]
-						var file = fs.readFileSync(
-							path.resolve(__dirname + "/../" + moduleName + '/' + moduleName + '.js'),
-							'utf8')
-
-							var moduleActions = self.getActions(file)
-
-							if (moduleActions.length > 0) {
-								self.moduleData[moduleName] = moduleActions
-							}
-					}
-				}
-			},
-
-			formatName: function(string) {
-				var parts = string.split('-');
-
-				if (parts.length == 1) {
-					return string
-				}
-
-				if (parts[0].toLowerCase() == 'mmm') {
-					parts[0] = parts[0].toUpperCase();
-				}
-
-				var result = [];
-
-				for (var i = 0; i < parts.length; i++) {
-					result.push(parts[i].charAt(0).toUpperCase() + parts[i].substr(1))
-				}
-
-				return result.join('-');
-			},
+			return parts.map(function(p) {
+				return p.charAt(0).toUpperCase() + p.substr(1);
+			}).join('-')
+		},
 });
