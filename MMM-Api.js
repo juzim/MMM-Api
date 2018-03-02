@@ -19,13 +19,16 @@ Module.register("MMM-Api", {
 	// Define start sequence.
 	start: function() {
 		Log.info("Starting module: " + this.name);
-		this.sendSocketNotification('lol', {});
+	},
 
+	notificationReceived: function(notification, payload, sender) {
+		if (notification === "DOM_OBJECTS_CREATED") {
+			this.sendSocketNotification("INITALIZE");
+		}
 	},
 
 	socketNotificationReceived: function(notification, payload, sender) {
 		this.sendNotification(notification, payload);
-
 	},
 
 });

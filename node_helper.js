@@ -26,16 +26,29 @@ module.exports = NodeHelper.create({
 	start: function() {
 		var self = this;
 
+		this.moduleData = {}
+
+		self.getDefaultModules();
+		self.getCustomModules();
+
 		console.log("Starting node helper for: " + self.name);
 
 		this.expressApp.get("/api", (req, res) => {
-				var modules = self.readModuleData();
-
-				this.sendSocketNotification("foo", {});
-				res.send({'success': 'true', 'modules': modules});
+					res.send({'success': 'true', 'modules': this.moduleData});
 		});
 
-		this.expressApp.get("/api/:modulename/:action", (req, res) => {
+		this.expressApp.post("/api/notify/:action", (req, res) => {
+			var query = url.parse(req.url, true).query
+			this.sendSocketNotification(req.params.action.toUpperCase(), query);
+			res.send({'success': 'true'});
+		});
+
+		this.expressApp.post("/api/:modulename/:action", (req, res) => {
+			if (this.moduleData[req.params.modulename] == undefined) {
+				res.status(404).send({'success': "false", "error": "Module not found"})
+				return
+			}
+			
 			var query = url.parse(req.url, true).query
 			this.sendSocketNotification(req.params.action.toUpperCase(), query);
 			res.send({'success': 'true'});
@@ -43,43 +56,44 @@ module.exports = NodeHelper.create({
 	},
 
 
-	readModuleData: function() {
+	getDefaultModules: function() {
 		var self = this;
 
-		var installedModules = require(path.resolve(__dirname + "/../default/defaultmodules.js"));
-
-		fs.readdirSync(path.resolve(__dirname + "/.."), function(err, files) {
+		fs.readdir(path.resolve(__dirname + "/../default"), function(err, files) {
 			for (var i = 0; i < files.length; i++) {
-				if (files[i] !== "node_modules" && files[i] !== "default"  && files[i] !== "README.md") {
-					installedModules.push(files[i]);
+				if (
+					files[i] !== "node_modules"
+					&& files[i] !== "README.md"
+					&& files[i] !== "defaultmodules.js")
+				{
+					self.moduleData[files[i]] = self.getModuleData(path, files[i])
 				}
 			}
 		});
-
-		return installedModules;
-
 	},
 
+	getCustomModules: function() {
+		var self = this;
 
-	loadModuleDefaultConfig: function(module, modulePath) {
-		// function copied from MichMich (MIT)
-		var filename = path.resolve(modulePath + "/" + module.longname + ".js");
-		try {
-			fs.accessSync(filename, fs.F_OK);
-			var jsfile = require(filename);
-			// module.configDefault = Module.configDefaults[module.longname];
-		} catch (e) {
-			if (e.code == "ENOENT") {
-				console.error("ERROR! Could not find main module js file for " + module.longname);
-			} else if (e instanceof ReferenceError || e instanceof SyntaxError) {
-				console.error("ERROR! Could not validate main module js file.");
-				console.error(e);
-			} else {
-				console.error("ERROR! Could not load main module js file. Error found: " + e);
+		fs.readdir(path.resolve(__dirname + "/.."), function(err, files) {
+			for (var i = 0; i < files.length; i++) {
+				if (
+					files[i] !== "node_modules"
+					&& files[i] !== "default"
+					&& files[i] !== "README.md"
+				) {
+
+					self.moduleData[files[i]] = self.getModuleData(path, files[i])
+				}
 			}
-		}
+		});
 	},
+
+	getModuleData: function(path, module) {
+			return {}
+	},
+
+
 	socketNotificationReceived: function(notification, payload) {
-		console.log(222)
 	},
 });
