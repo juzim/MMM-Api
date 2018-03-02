@@ -38,7 +38,13 @@ module.exports = NodeHelper.create({
 		});
 
 		this.expressApp.get("/api/:modulename", (req, res) => {
-			res.send({'success': 'true', 'actions': this.moduleData[req.params.modulename]});
+			var moduleName = self.formatName(req.params.modulename)
+			if (this.moduleData[moduleName] == undefined) {
+				res.status(404).send({'success': "false", "error": "Module not found"})
+				return
+			}
+
+			res.send({'success': 'true', 'actions': this.moduleData[moduleName]});
 		});
 
 		this.expressApp.post("/api/notify/:action", (req, res) => {
@@ -59,7 +65,6 @@ module.exports = NodeHelper.create({
 				res.status(404).send({'success': "false", "error": "Action not found"})
 				return
 			}
-
 
 			var query = url.parse(req.url, true).query
 			this.sendSocketNotification(actionName, query);
