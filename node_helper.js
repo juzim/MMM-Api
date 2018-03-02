@@ -34,7 +34,11 @@ module.exports = NodeHelper.create({
 		console.log("Starting node helper for: " + self.name);
 
 		this.expressApp.get("/api", (req, res) => {
-					res.send({'success': 'true', 'modules': this.moduleData});
+			res.send({'success': 'true', 'modules': this.moduleData});
+		});
+
+		this.expressApp.get("/api/:modulename", (req, res) => {
+			res.send({'success': 'true', 'actions': this.moduleData[req.params.modulename]});
 		});
 
 		this.expressApp.post("/api/notify/:action", (req, res) => {
@@ -44,13 +48,21 @@ module.exports = NodeHelper.create({
 		});
 
 		this.expressApp.post("/api/:modulename/:action", (req, res) => {
-			if (this.moduleData[req.params.modulename] == undefined) {
+			var moduleName = self.formatName(req.params.modulename)
+			if (this.moduleData[moduleName] == undefined) {
 				res.status(404).send({'success': "false", "error": "Module not found"})
 				return
 			}
-			
+
+			var actionName =req.params.action.toUpperCase();
+			if (this.moduleData[moduleName].indexOf(actionName) < 0) {
+				res.status(404).send({'success': "false", "error": "Action not found"})
+				return
+			}
+
+
 			var query = url.parse(req.url, true).query
-			this.sendSocketNotification(req.params.action.toUpperCase(), query);
+			this.sendSocketNotification(actionName, query);
 			res.send({'success': 'true'});
 		});
 	},
@@ -59,41 +71,109 @@ module.exports = NodeHelper.create({
 	getDefaultModules: function() {
 		var self = this;
 
-		fs.readdir(path.resolve(__dirname + "/../default"), function(err, files) {
+		var files = fs.readdirSync(path.resolve(__dirname + "/../default"))
+
+		for (index in files) {
+			var file = files[index];
+			var installedModules = []
 			for (var i = 0; i < files.length; i++) {
+				var module = files[i];
+
 				if (
-					files[i] !== "node_modules"
-					&& files[i] !== "README.md"
-					&& files[i] !== "defaultmodules.js")
+					module !== "node_modules"
+					&& module !== "README.md"
+					&& module !== "defaultmodules.js")
 				{
-					self.moduleData[files[i]] = self.getModuleData(path, files[i])
+					installedModules.push(module);
+
 				}
 			}
-		});
+
+			for (index in installedModules) {
+				var moduleName = installedModules[index]
+				var file = fs.readFileSync(
+					path.resolve(__dirname + "/../default/" + moduleName + '/' + moduleName + '.js'),
+					'utf8')
+
+					var moduleActions = self.getActions(file)
+
+					if (moduleActions.length > 0) {
+						self.moduleData[moduleName] = moduleActions
+					}
+			}
+		}
+	},
+
+	getActions: (content) => {
+		var self = this;
+
+			//var re = /case '([A-Z_]+)'/g;
+			var re = /notification \=\=\=? "([A-Z_]+)"|case '([A-Z_]+)'/g;
+			var m;
+			var availabeActions = [];
+			do {
+					m = re.exec(content);
+					if (m && m[1] != 'DOM_OBJECTS_CREATED') {
+							availabeActions.push(m[1]);
+					}
+			} while (m);
+
+			return availabeActions;
 	},
 
 	getCustomModules: function() {
-		var self = this;
+				var self = this;
 
-		fs.readdir(path.resolve(__dirname + "/.."), function(err, files) {
-			for (var i = 0; i < files.length; i++) {
-				if (
-					files[i] !== "node_modules"
-					&& files[i] !== "default"
-					&& files[i] !== "README.md"
-				) {
+				var files = fs.readdirSync(path.resolve(__dirname + "/.."))
 
-					self.moduleData[files[i]] = self.getModuleData(path, files[i])
+				for (index in files) {
+					var file = files[index];
+					var installedModules = []
+					for (var i = 0; i < files.length; i++) {
+						var module = files[i];
+
+						if (
+							files[i] !== "node_modules"
+							&& files[i] !== "default"
+							&& files[i] !== "README.md"
+						) {
+							installedModules.push(module);
+
+						}
+					}
+
+					for (index in installedModules) {
+						var moduleName = installedModules[index]
+						var file = fs.readFileSync(
+							path.resolve(__dirname + "/../" + moduleName + '/' + moduleName + '.js'),
+							'utf8')
+
+							var moduleActions = self.getActions(file)
+
+							if (moduleActions.length > 0) {
+								self.moduleData[moduleName] = moduleActions
+							}
+					}
 				}
-			}
-		});
-	},
+			},
 
-	getModuleData: function(path, module) {
-			return {}
-	},
+			formatName: function(string) {
+				var parts = string.split('-');
 
+				if (parts.length == 1) {
+					return string
+				}
 
-	socketNotificationReceived: function(notification, payload) {
-	},
+				if (parts[0].toLowerCase() == 'mmm') {
+					parts[0] = parts[0].toUpperCase();
+				}
+
+				var result = [];
+
+				for (var i = 0; i < parts.length; i++) {
+					result.push(parts[i].charAt(0).toUpperCase() + parts[i].substr(1))
+				}
+
+				return result.join('-');
+			},
 });
