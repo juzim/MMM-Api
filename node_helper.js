@@ -48,11 +48,11 @@ module.exports = NodeHelper.create({
 
 		console.log("Starting node helper for: " + self.name);
 
-		this.expressApp.get("/api", (req, res) => {
+		this.expressApp.get("/api/1/modules", (req, res) => {
 			res.send({'success': 'true', 'modules': this.moduleData});
 		});
 
-		this.expressApp.get("/api/:modulename", (req, res) => {
+		this.expressApp.get("/api/1/modules/:modulename", (req, res) => {
 			var moduleName = self.formatName(req.params.modulename)
 			console.log(moduleName)
 			if (this.moduleData[moduleName] == undefined) {
@@ -69,7 +69,7 @@ module.exports = NodeHelper.create({
 			res.send({'success': 'true'});
 		});
 
-		this.expressApp.post("/api/:modulename/:action", (req, res) => {
+		this.expressApp.post("/api/1/modules/:modulename/:action", (req, res) => {
 			var moduleName = self.formatName(req.params.modulename)
 			if (this.moduleData[moduleName] == undefined) {
 				res.status(404).send({'success': "false", "error": "Module not found"})
