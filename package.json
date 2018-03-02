@@ -22,7 +22,5 @@
   },
   "homepage": "git+https://github.com/juzim/MMM-Api#readme",
   "dependencies": {
-    "simple-git": "latest",
-    "body-parser": "latest"
   }
 }

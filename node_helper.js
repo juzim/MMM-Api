@@ -1,5 +1,5 @@
 /* Magic Mirror
- * Module: Remote Control
+ * Module: Api
  *
  * By Joseph Bethge
  * MIT Licensed.
@@ -12,8 +12,6 @@ const fs = require("fs");
 const exec = require("child_process").exec;
 const os = require("os");
 const bodyParser = require("body-parser");
-
-var defaultModules = require(path.resolve(__dirname + "/../default/defaultmodules.js"));
 
 Module = {
 	configDefaults: {},
@@ -32,15 +30,15 @@ module.exports = NodeHelper.create({
 
 		this.expressApp.get("/api", (req, res) => {
 				var modules = self.readModuleData();
-				console.log(modules);
 
-				res.send({'modules': modules});
-
+				this.sendSocketNotification("foo", {});
+				res.send({'success': 'true', 'modules': modules});
 		});
 
-		this.expressApp.get("/api/notifytt", (req, res) => {
-				res.send(200);
-
+		this.expressApp.get("/api/:modulename/:action", (req, res) => {
+			var query = url.parse(req.url, true).query
+			this.sendSocketNotification(req.params.action.toUpperCase(), query);
+			res.send({'success': 'true'});
 		});
 	},
 
@@ -81,33 +79,7 @@ module.exports = NodeHelper.create({
 			}
 		}
 	},
-
 	socketNotificationReceived: function(notification, payload) {
-		var self = this;
-
-		if (notification === "CURRENT_STATUS")
-		{
-			this.configData = payload;
-			for (var i = 0; i < this.waiting.length; i++) {
-				var waitObject = this.waiting[i];
-
-				waitObject.run();
-			}
-			this.waiting = [];
-		}
-		if (notification === "REQUEST_DEFAULT_SETTINGS")
-		{
-			// module started, answer with current ip addresses
-			self.sendSocketNotification("IP_ADDRESSES", self.getIpAddresses());
-
-			// check if we have got saved default settings
-			self.loadDefaultSettings();
-		}
-
-		if (notification === "REMOTE_ACTION")
-		{
-			this.executeQuery(payload);
-		}
-
-	}
+		console.log(222)
+	},
 });

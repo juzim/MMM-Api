@@ -1,13 +1,13 @@
 /* global Module, Log, MM, config */
 
 /* Magic Mirror
- * Module: Remote Control
+ * Module: Api
  *
- * By Joseph Bethge
+ * By Julian Zimmermann
  * MIT Licensed.
  */
 
-Module.register("MMM-Remote-Control", {
+Module.register("MMM-Api", {
 
 	requiresVersion: "2.1.0",
 
@@ -18,6 +18,13 @@ Module.register("MMM-Remote-Control", {
 
 	// Define start sequence.
 	start: function() {
+		Log.info("Starting module: " + this.name);
+		this.sendSocketNotification('lol', {});
+
+	},
+
+	socketNotificationReceived: function(notification, payload, sender) {
+		this.sendNotification(notification, payload);
 
 	},
 
