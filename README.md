@@ -23,9 +23,10 @@ curl -X POST 'http://localhost:3001/api/v1/modules/mmm-glance/glance_on?name=new
 ```
 
 #### Global
-To send a global notification, use ```bash
+To send a global notification, use
+```bash
 MAGIG_MIRROR_IP:PORT/api/v1/notify/ACTION?payload1key=payload1value&payload2key=payload2value
-```.
+```
 
 Example:
 ```bash
