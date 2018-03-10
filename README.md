@@ -85,7 +85,7 @@ bash -c "$(curl -s https://raw.githubusercontent.com/juzim/MMM-Api/master/instal
 ```bash
 cd ~/MagicMirror/modules # adapt directory if you are using a different one
 git clone https://github.com/juzim/MMM-Api.git
-cd MMM-Remote-Control
+cd MMM-Api
 npm install
 ```
 
