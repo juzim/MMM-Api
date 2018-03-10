@@ -66,7 +66,7 @@ The payload is passed as URL parameters. These are neither validated nor do they
 | modules | GET | get a list of all installed modules and actions:<br> ```{"success": "true", "modules": {"alert": ["SHOW_ALERT","HIDE_ALERT"]}``` |
 | modules/moduleName | GET | get a list of available actions for a module:<br> ```{"success":"true","actions":["SHOW_ALERT","HIDE_ALERT"]}``` |
 | modules/moduleName/action | POST | send a notification to a module  |
-| nofify/action | POST | send a global notification  |
+| notify/action | POST | send a global notification  |
 
 
 ## Installation
