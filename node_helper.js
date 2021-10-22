@@ -63,7 +63,7 @@ module.exports = NodeHelper.create({
 			res.send({'success': 'true', 'actions': this.moduleData[moduleName]});
 		});
 
-		this.expressApp.post("/api/notify/:action", (req, res) => {
+		this.expressApp.post("/api/v1/notify/:action", (req, res) => {
 			var query = url.parse(req.url, true).query
 			this.sendSocketNotification(req.params.action.toUpperCase(), query);
 			res.send({'success': 'true'});
